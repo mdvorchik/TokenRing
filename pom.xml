@@ -1,0 +1,6 @@
+<project>
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>org.sbt.app</groupId>
+    <artifactId>token-ring</artifactId>
+    <version>1</version>
+</project>
