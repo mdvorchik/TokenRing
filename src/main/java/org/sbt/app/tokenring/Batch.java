@@ -7,7 +7,7 @@ import java.util.UUID;
 public class Batch {
     private final UUID uuid;
     private final String data;
-    private final List<Long> keyDatesInNanoSec = new ArrayList<Long>();
+    private final List<Long> keyDatesInNanoSec = new ArrayList<>();
 
     private final int finalReceiverId;
     private final long dateOfCreationInNanoSec;
@@ -52,5 +52,16 @@ public class Batch {
         this.dateOfDeliveryInNanoSec = dateOfDeliveryInNanoSec;
     }
 
-
+    @Override
+    public String toString() {
+        return "Batch{" +
+                "uuid=" + uuid +
+                ", data='" + data + '\'' +
+                ", keyDatesInNanoSec=" + keyDatesInNanoSec +
+                ", finalReceiverId=" + finalReceiverId +
+                ", dateOfCreationInNanoSec=" + dateOfCreationInNanoSec +
+                ", dateOfDeliveryInNanoSec=" + dateOfDeliveryInNanoSec +
+                ", timeOfDeliveryInNanoSec=" + (dateOfDeliveryInNanoSec - dateOfCreationInNanoSec) +
+                '}';
+    }
 }
