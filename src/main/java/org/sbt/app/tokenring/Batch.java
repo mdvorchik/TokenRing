@@ -1,4 +1,4 @@
-package org.sbt.app;
+package org.sbt.app.tokenring;
 
 import java.util.ArrayList;
 import java.util.List;
