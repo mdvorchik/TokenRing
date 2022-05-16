@@ -65,8 +65,13 @@ public class TokenRing {
         receivers = receivers.stream().distinct().collect(Collectors.toList());
 
         //normal distribution
+//        for (int i = 0; i < batchCount; i++) {
+//            firstReceiver.sendToNext(new Batch(i, "data", "" + (int) (Math.random() * nodeCount), System.nanoTime()));
+//        }
+
+        //all data from start to end node
         for (int i = 0; i < batchCount; i++) {
-            firstReceiver.sendToNext(new Batch(i, "data", "" + (int) (Math.random() * nodeCount), System.nanoTime()));
+            firstReceiver.sendToNext(new Batch(i, "data", "" + (nodeCount - 1), System.nanoTime()));
         }
     }
 

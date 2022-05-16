@@ -49,7 +49,7 @@ public class Node implements Runnable {
             }
         } else {
             if (needLogging) {
-                LOGGER.debug(nodeID + "," + batch.getId() + "," + deltaTime + "," + 0);
+//                LOGGER.debug(nodeID + "," + batch.getId() + "," + deltaTime + "," + 0);
             }
             nextReceiver.sendToNext(batch);
         }
