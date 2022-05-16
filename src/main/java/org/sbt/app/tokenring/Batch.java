@@ -3,22 +3,22 @@ package org.sbt.app.tokenring;
 import java.util.UUID;
 
 public class Batch {
-    private final UUID uuid;
+    private final int id;
     private final String data;
 
     private final String finalReceiverId;
     private final long dateOfCreationInNanoSec;
 
-    public Batch(UUID uuid, String data, String finalReceiverId, long dateOfCreationInNanoSec) {
-        this.uuid = uuid;
+    public Batch(int id, String data, String finalReceiverId, long dateOfCreationInNanoSec) {
+        this.id = id;
         this.data = data;
         this.finalReceiverId = finalReceiverId;
         this.dateOfCreationInNanoSec = dateOfCreationInNanoSec;
     }
 
 
-    public UUID getUuid() {
-        return uuid;
+    public int getId() {
+        return id;
     }
 
 
@@ -39,7 +39,7 @@ public class Batch {
     @Override
     public String toString() {
         return "Batch{" +
-                "uuid=" + uuid +
+                "id=" + id +
                 ", data='" + data + '\'' +
                 ", finalReceiverId=" + finalReceiverId +
                 ", dateOfCreationInNanoSec=" + dateOfCreationInNanoSec +

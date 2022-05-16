@@ -1,19 +1,22 @@
 package org.sbt.app.tokenring;
 
-import org.sbt.app.tokenring.receiver.SimpleReceiver;
+import org.sbt.app.tokenring.receiver.ExchangerReceiver;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 public class TokenRing {
     private final int nodeCount;
     private final int batchCount;
     private final List<Node> nodes = new ArrayList<>();
     private final ExecutorService executorService;
-    private final BatchReceiver firstReceiver = new SimpleReceiver();
+    private final BatchReceiver firstReceiver = new ExchangerReceiver();
+    private final AtomicReference<Integer> dataReceivedCount = new AtomicReference<>(0);
+    private List<BatchReceiver> receivers = new ArrayList<>();
 
     public TokenRing(int nodeCount, int batchCount) {
 
@@ -21,13 +24,18 @@ public class TokenRing {
         this.batchCount = batchCount;
         executorService = Executors.newFixedThreadPool(nodeCount);
 
-        BatchReceiver secondReceiver = new SimpleReceiver();
-        Node node = new Node("0", firstReceiver, secondReceiver);
+
+        receivers.add(firstReceiver);
+        BatchReceiver secondReceiver = new ExchangerReceiver();
+        receivers.add(secondReceiver);
+        Node node = new Node("0", dataReceivedCount, firstReceiver, secondReceiver);
         nodes.add(node);
         for (int i = 1; i < nodeCount; i++) {
-            BatchReceiver batchReceiver = (i == nodeCount - 1) ? firstReceiver : new SimpleReceiver();
-            nodes.add(new Node(""+i, secondReceiver, batchReceiver));
+            BatchReceiver batchReceiver = (i == nodeCount - 1) ? firstReceiver : new ExchangerReceiver();
+            nodes.add(new Node("" + i, dataReceivedCount, secondReceiver, batchReceiver));
             secondReceiver = batchReceiver;
+
+            receivers.add(secondReceiver);
         }
     }
 
@@ -37,10 +45,28 @@ public class TokenRing {
         }
     }
 
+    public void turnOffLogging() {
+        for (Node node : nodes) {
+            node.turnOffLogging();
+        }
+    }
+
+    public void turnOnLogging() {
+        for (Node node : nodes) {
+            node.turnOnLogging();
+        }
+    }
+
+    public int getBatchCountReceived(){
+        return dataReceivedCount.get();
+    }
+
     public void sendData() throws InterruptedException {
-        synchronized (firstReceiver) {
-            firstReceiver.sendToNext(new Batch(UUID.randomUUID(), "data", "5", System.nanoTime()));
-            firstReceiver.notify();
+        receivers = receivers.stream().distinct().collect(Collectors.toList());
+
+        //normal distribution
+        for (int i = 0; i < batchCount; i++) {
+            firstReceiver.sendToNext(new Batch(i, "data", "" + (int) (Math.random() * nodeCount), System.nanoTime()));
         }
     }
 
@@ -48,4 +74,7 @@ public class TokenRing {
         executorService.shutdownNow();
     }
 
+    public void refresh() {
+        dataReceivedCount.set(0);
+    }
 }
