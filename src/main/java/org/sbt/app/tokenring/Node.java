@@ -19,10 +19,13 @@ public class Node implements Runnable {
     public void run() {
         try {
             while (!Thread.currentThread().isInterrupted()) {
-                Batch batch = null;
-                if ((batch = previousReceiver.pollFromPrevious()) != null) {
-                    receive(batch);
+                Batch batch;
+                synchronized (previousReceiver) {
+                    while ((batch = previousReceiver.pollFromPrevious()) == null) {
+                        previousReceiver.wait();
+                    }
                 }
+                receive(batch);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -37,7 +40,7 @@ public class Node implements Runnable {
         needLogging = false;
     }
 
-    private void receive(Batch batch) {
+    private void receive(Batch batch) throws InterruptedException {
         long deltaTime = System.nanoTime() - batch.getDateOfCreationInNanoSec();
         if (batch.getFinalReceiverId().equals(nodeID)) {
             if (needLogging) {
@@ -47,7 +50,10 @@ public class Node implements Runnable {
             if (needLogging) {
                 LOGGER.debug(nodeID + "," + batch.getUuid() + "," + deltaTime + "," + 0);
             }
-            nextReceiver.sendToNext(batch);
+            synchronized (nextReceiver) {
+                nextReceiver.sendToNext(batch);
+                nextReceiver.notify();
+            }
         }
     }
 }

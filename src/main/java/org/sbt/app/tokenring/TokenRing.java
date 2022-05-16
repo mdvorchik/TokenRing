@@ -37,8 +37,11 @@ public class TokenRing {
         }
     }
 
-    public void sendData() {
-        firstReceiver.sendToNext(new Batch(UUID.randomUUID(), "data", "5", System.nanoTime()));
+    public void sendData() throws InterruptedException {
+        synchronized (firstReceiver) {
+            firstReceiver.sendToNext(new Batch(UUID.randomUUID(), "data", "5", System.nanoTime()));
+            firstReceiver.notify();
+        }
     }
 
     public void stop() {

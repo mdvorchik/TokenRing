@@ -11,6 +11,8 @@ public class Main {
 
         tokenRing.sendData();
         Thread.sleep(100);
+        tokenRing.sendData();
+        Thread.sleep(100);
         System.out.println("Works");
         tokenRing.stop();
     }
