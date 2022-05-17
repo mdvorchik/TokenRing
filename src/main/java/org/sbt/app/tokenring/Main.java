@@ -2,7 +2,7 @@ package org.sbt.app.tokenring;
 
 
 public class Main {
-    public final static int NODE_COUNT = 80;
+    public final static int NODE_COUNT = 8;
     public final static int BATCH_COUNT = 100;
     public final static int CYCLE_COUNT = 10;
 
@@ -16,7 +16,7 @@ public class Main {
         for (int i = 0; i < CYCLE_COUNT; i++) {
             tokenRing.sendData();
         }
-        Thread.sleep(5 * BATCH_COUNT);
+        Thread.sleep(7 * BATCH_COUNT);
 
         //real start
         tokenRing.refresh();
@@ -24,7 +24,7 @@ public class Main {
         for (int i = 0; i < CYCLE_COUNT; i++) {
             tokenRing.sendData();
         }
-        Thread.sleep(5 * BATCH_COUNT);
+        Thread.sleep(7 * BATCH_COUNT);
         if (tokenRing.getBatchCountReceived() == BATCH_COUNT * CYCLE_COUNT) {
             System.out.println("All data received");
         } else {
