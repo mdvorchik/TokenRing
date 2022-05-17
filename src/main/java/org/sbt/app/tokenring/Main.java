@@ -3,7 +3,7 @@ package org.sbt.app.tokenring;
 
 public class Main {
     public final static int NODE_COUNT = 8;
-    public final static int BATCH_COUNT = 100;
+    public final static int BATCH_COUNT = 1000;
     public final static int CYCLE_COUNT = 10;
 
     public static void main(String[] args) throws InterruptedException {
