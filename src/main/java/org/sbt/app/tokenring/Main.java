@@ -2,9 +2,9 @@ package org.sbt.app.tokenring;
 
 
 public class Main {
-    public final static int NODE_COUNT = 8;
-    public final static int BATCH_COUNT = 500;
-    public final static int CYCLE_COUNT = 10;
+    public final static int NODE_COUNT = 80;
+    public final static int BATCH_COUNT = 100;
+    public final static int CYCLE_COUNT = 1;
 
     public static void main(String[] args) throws InterruptedException {
         TokenRing tokenRing = new TokenRing(NODE_COUNT, BATCH_COUNT);

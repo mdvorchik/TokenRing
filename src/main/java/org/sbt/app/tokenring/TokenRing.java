@@ -1,8 +1,6 @@
 package org.sbt.app.tokenring;
 
-import org.sbt.app.tokenring.receiver.ExchangerReceiver;
-import org.sbt.app.tokenring.receiver.NonBlockingArrayReceiver;
-import org.sbt.app.tokenring.receiver.SynchronousQueueReceiver;
+import org.sbt.app.tokenring.receiver.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,20 +23,24 @@ public class TokenRing {
         this.nodeCount = nodeCount;
         this.batchCount = batchCount;
         executorService = Executors.newFixedThreadPool(nodeCount);
-        firstReceiver = new NonBlockingArrayReceiver(batchCount);
+        firstReceiver = getReceiver(batchCount);
 
         receivers.add(firstReceiver);
-        BatchReceiver secondReceiver = new NonBlockingArrayReceiver(batchCount);
+        BatchReceiver secondReceiver = getReceiver(batchCount);
         receivers.add(secondReceiver);
         Node node = new Node("0", dataReceivedCount, firstReceiver, secondReceiver);
         nodes.add(node);
         for (int i = 1; i < nodeCount; i++) {
-            BatchReceiver batchReceiver = (i == nodeCount - 1) ? firstReceiver : new ExchangerReceiver();
+            BatchReceiver batchReceiver = (i == nodeCount - 1) ? firstReceiver : getReceiver(batchCount);
             nodes.add(new Node("" + i, dataReceivedCount, secondReceiver, batchReceiver));
             secondReceiver = batchReceiver;
 
             receivers.add(secondReceiver);
         }
+    }
+
+    private BatchReceiver getReceiver(int batchCount) {
+        return new SynchronousQueueReceiver();
     }
 
     public void start() {
