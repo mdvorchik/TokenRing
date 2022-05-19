@@ -1,7 +1,8 @@
 package org.sbt.app.tokenring;
 
-import org.sbt.app.tokenring.receiver.BlockingTransferReceiver;
 import org.sbt.app.tokenring.receiver.ExchangerReceiver;
+import org.sbt.app.tokenring.receiver.NonBlockingArrayReceiver;
+import org.sbt.app.tokenring.receiver.SynchronousQueueReceiver;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,7 +16,7 @@ public class TokenRing {
     private final int batchCount;
     private final List<Node> nodes = new ArrayList<>();
     private final ExecutorService executorService;
-    private final BatchReceiver firstReceiver = new BlockingTransferReceiver();
+    private final BatchReceiver firstReceiver;
     private final AtomicReference<Integer> dataReceivedCount = new AtomicReference<>(0);
     private List<BatchReceiver> receivers = new ArrayList<>();
 
@@ -24,10 +25,10 @@ public class TokenRing {
         this.nodeCount = nodeCount;
         this.batchCount = batchCount;
         executorService = Executors.newFixedThreadPool(nodeCount);
-
+        firstReceiver = new NonBlockingArrayReceiver(batchCount);
 
         receivers.add(firstReceiver);
-        BatchReceiver secondReceiver = new BlockingTransferReceiver();
+        BatchReceiver secondReceiver = new NonBlockingArrayReceiver(batchCount);
         receivers.add(secondReceiver);
         Node node = new Node("0", dataReceivedCount, firstReceiver, secondReceiver);
         nodes.add(node);

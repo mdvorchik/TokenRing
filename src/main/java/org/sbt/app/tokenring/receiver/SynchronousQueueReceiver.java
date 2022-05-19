@@ -3,21 +3,20 @@ package org.sbt.app.tokenring.receiver;
 import org.sbt.app.tokenring.Batch;
 import org.sbt.app.tokenring.BatchReceiver;
 
-import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.SynchronousQueue;
 
-public class NonBlockingQueueReceiver implements BatchReceiver {
-    private final Queue<Batch> queue = new ConcurrentLinkedQueue<>();
+public class SynchronousQueueReceiver implements BatchReceiver {
+    private final BlockingQueue<Batch> queue = new SynchronousQueue<>();
 
     @Override
     public void sendToNext(Batch batch) throws InterruptedException {
-        queue.add(batch);
+        queue.put(batch);
     }
 
     @Override
     public Batch pollFromPrevious() throws InterruptedException {
-        return queue.poll();
+        return queue.take();
     }
 }
