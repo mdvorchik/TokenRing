@@ -10,6 +10,7 @@ public class Node implements Runnable {
     private final AtomicReference<Integer> dataReceivedCount;
     private final BatchReceiver previousReceiver;
     private final BatchReceiver nextReceiver;
+    private long startWorkingDate;
     private volatile boolean needLogging = true;
 
     public Node(String nodeID, AtomicReference<Integer> dataReceivedCount, BatchReceiver previousReceiver, BatchReceiver nextReceiver) {
@@ -17,6 +18,7 @@ public class Node implements Runnable {
         this.dataReceivedCount = dataReceivedCount;
         this.previousReceiver = previousReceiver;
         this.nextReceiver = nextReceiver;
+        startWorkingDate = System.nanoTime();
     }
 
     @Override
@@ -40,12 +42,16 @@ public class Node implements Runnable {
         needLogging = false;
     }
 
+    public void updateStartWorkingDate() {
+        startWorkingDate = System.nanoTime();
+    }
+
     private void receive(Batch batch) throws InterruptedException {
         long deltaTime = System.nanoTime() - batch.getDateOfCreationInNanoSec();
         if (batch.getFinalReceiverId().equals(nodeID)) {
             dataReceivedCount.getAndUpdate((x) -> x + 1);
             if (needLogging) {
-                LOGGER.debug(nodeID + "," + batch.getId() + "," + deltaTime + "," + 1);
+                LOGGER.debug(nodeID + "," + batch.getId() + "," + deltaTime + "," + (System.nanoTime() - startWorkingDate) + "," + 1);
             }
         } else {
             if (needLogging) {

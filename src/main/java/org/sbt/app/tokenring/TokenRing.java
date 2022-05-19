@@ -1,5 +1,6 @@
 package org.sbt.app.tokenring;
 
+import org.sbt.app.tokenring.receiver.BlockingQueueReceiver;
 import org.sbt.app.tokenring.receiver.ExchangerReceiver;
 import org.sbt.app.tokenring.receiver.NonBlockingQueueReceiver;
 
@@ -74,6 +75,10 @@ public class TokenRing {
         for (int i = 0; i < batchCount; i++) {
             firstReceiver.sendToNext(new Batch(i, "data", "" + (nodeCount - 1), System.nanoTime()));
         }
+
+        while (dataReceivedCount.get() != batchCount) {
+            //wait
+        }
     }
 
     public void stop() {
@@ -82,5 +87,8 @@ public class TokenRing {
 
     public void refresh() {
         dataReceivedCount.set(0);
+        for (Node node : nodes) {
+            node.updateStartWorkingDate();
+        }
     }
 }
