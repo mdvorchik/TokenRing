@@ -8,7 +8,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class BlockingQueueReceiver implements BatchReceiver {
-    BlockingQueue<Batch> queue = new LinkedBlockingQueue<>();
+    private final BlockingQueue<Batch> queue = new LinkedBlockingQueue<>();
 
     @Override
     public void sendToNext(Batch batch) throws InterruptedException {

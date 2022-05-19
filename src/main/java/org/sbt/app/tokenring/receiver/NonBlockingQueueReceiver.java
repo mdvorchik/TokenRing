@@ -9,7 +9,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class NonBlockingQueueReceiver implements BatchReceiver {
-    Queue<Batch> queue = new ConcurrentLinkedQueue<>();
+    private final Queue<Batch> queue = new ConcurrentLinkedQueue<>();
 
     @Override
     public void sendToNext(Batch batch) throws InterruptedException {
