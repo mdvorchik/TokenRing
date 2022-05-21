@@ -40,7 +40,7 @@ public class TokenRing {
     }
 
     private BatchReceiver getReceiver(int batchCount) {
-        return new SynchronousQueueReceiver();
+        return new ExchangerReceiver();
     }
 
     public void start() {
@@ -67,11 +67,6 @@ public class TokenRing {
 
     public void sendData() throws InterruptedException {
         receivers = receivers.stream().distinct().collect(Collectors.toList());
-
-        //normal distribution
-//        for (int i = 0; i < batchCount; i++) {
-//            firstReceiver.sendToNext(new Batch(i, "data", "" + (int) (Math.random() * nodeCount), System.nanoTime()));
-//        }
 
         //all data from start to end node
         for (int i = 0; i < batchCount; i++) {
