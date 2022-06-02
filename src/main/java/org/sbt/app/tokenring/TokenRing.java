@@ -1,52 +1,52 @@
 package org.sbt.app.tokenring;
 
-import org.sbt.app.tokenring.receiver.*;
+import org.sbt.app.tokenring.receiver.ExchangerReceiver;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 public class TokenRing {
     private final int nodeCount;
     private final int batchCount;
+    private final long workingTime;
     private final List<Node> nodes = new ArrayList<>();
     private final ExecutorService executorService;
     private final BatchReceiver firstReceiver;
-    private final AtomicReference<Integer> dataReceivedCount = new AtomicReference<>(0);
     private List<BatchReceiver> receivers = new ArrayList<>();
 
-    public TokenRing(int nodeCount, int batchCount) {
-
+    public TokenRing(int nodeCount, int batchCount, long workingTime) {
         this.nodeCount = nodeCount;
         this.batchCount = batchCount;
+        this.workingTime = workingTime;
         executorService = Executors.newFixedThreadPool(nodeCount);
-        firstReceiver = getReceiver(batchCount);
+        firstReceiver = getReceiver(batchCount, workingTime);
 
         receivers.add(firstReceiver);
-        BatchReceiver secondReceiver = getReceiver(batchCount);
+        BatchReceiver secondReceiver = getReceiver(batchCount, workingTime);
         receivers.add(secondReceiver);
-        Node node = new Node("0", dataReceivedCount, firstReceiver, secondReceiver);
+        Node node = new Node("0", firstReceiver, secondReceiver);
         nodes.add(node);
         for (int i = 1; i < nodeCount; i++) {
-            BatchReceiver batchReceiver = (i == nodeCount - 1) ? firstReceiver : getReceiver(batchCount);
-            nodes.add(new Node("" + i, dataReceivedCount, secondReceiver, batchReceiver));
+            BatchReceiver batchReceiver = (i == nodeCount - 1) ? firstReceiver : getReceiver(batchCount, workingTime);
+            nodes.add(new Node("" + i, secondReceiver, batchReceiver));
             secondReceiver = batchReceiver;
 
             receivers.add(secondReceiver);
         }
     }
 
-    private BatchReceiver getReceiver(int batchCount) {
-        return new ExchangerReceiver();
+    private BatchReceiver getReceiver(int batchCount, long workingTime) {
+        return new ExchangerReceiver(workingTime);
     }
 
-    public void start() {
-        for (Node node : nodes) {
-            executorService.execute(node);
-        }
+    private void start(long workingTime) {
+        try {
+            for (Future<Integer> res : executorService.invokeAll(nodes, workingTime, TimeUnit.SECONDS)) {
+                res.get();
+            }
+        } catch (Exception ignore) {}
     }
 
     public void turnOffLogging() {
@@ -61,31 +61,28 @@ public class TokenRing {
         }
     }
 
-    public int getBatchCountReceived() {
-        return dataReceivedCount.get();
-    }
-
-    public void sendData() throws InterruptedException {
+    public void sendData(int numberOfStart) throws InterruptedException, TimeoutException {
+        Thread mainExecutor = new Thread(() -> {
+            try {
+                start(workingTime);
+            } catch ( Exception e) {
+                e.printStackTrace();
+            }
+        });
         receivers = receivers.stream().distinct().collect(Collectors.toList());
 
+
         //all data from start to end node
-        for (int i = 0; i < batchCount; i++) {
-            firstReceiver.sendToNext(new Batch(i, "data", "" + (nodeCount - 1), System.nanoTime()));
+        long startTime = System.nanoTime();
+        long finishTime = startTime + TimeUnit.SECONDS.toNanos(workingTime);
+        Batch firstBatch = new Batch(numberOfStart, 0, "data", "" + (nodeCount - 1), startTime, finishTime);
+        for (int i = 1; i < batchCount; i++) {
+            startTime = System.nanoTime();
+            finishTime = startTime + TimeUnit.SECONDS.toNanos(workingTime);
+            firstReceiver.addToBuffer(new Batch(numberOfStart, i, "data", "" + (nodeCount - 1), startTime, finishTime));
         }
-
-        while (dataReceivedCount.get() != batchCount) {
-            //wait
-        }
-    }
-
-    public void stop() {
-        executorService.shutdownNow();
-    }
-
-    public void refresh() {
-        dataReceivedCount.set(0);
-        for (Node node : nodes) {
-            node.updateStartWorkingDate();
-        }
+        mainExecutor.start();
+        firstReceiver.sendToNext(firstBatch);
+        mainExecutor.join();
     }
 }
