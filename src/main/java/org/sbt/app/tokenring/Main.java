@@ -9,8 +9,8 @@ import java.util.concurrent.TimeoutException;
 
 public class Main {
     public final static int NODE_COUNT = 4;
-    public final static int BATCH_COUNT = 4;
-    public final static int WORKING_TIME_IN_SEC = 2;
+    public final static int BATCH_COUNT = 1;
+    public final static int WORKING_TIME_IN_SEC = 1;
 
     private final static Logger LOGGER = Logger.getLogger(Main.class);
 

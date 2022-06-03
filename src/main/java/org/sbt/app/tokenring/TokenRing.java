@@ -1,6 +1,8 @@
 package org.sbt.app.tokenring;
 
+import org.sbt.app.tokenring.receiver.BlockingQueueReceiver;
 import org.sbt.app.tokenring.receiver.ExchangerReceiver;
+import org.sbt.app.tokenring.receiver.NonBlockingArrayReceiver;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,6 +40,8 @@ public class TokenRing {
     }
 
     private BatchReceiver getReceiver(int batchCount, long workingTime) {
+//        return new NonBlockingArrayReceiver(batchCount);
+//        return new BlockingQueueReceiver();
         return new ExchangerReceiver(workingTime);
     }
 
@@ -47,6 +51,7 @@ public class TokenRing {
                 res.get();
             }
         } catch (Exception ignore) {}
+        executorService.shutdown();
     }
 
     public void turnOffLogging() {
@@ -62,13 +67,6 @@ public class TokenRing {
     }
 
     public void sendData(int numberOfStart) throws InterruptedException, TimeoutException {
-        Thread mainExecutor = new Thread(() -> {
-            try {
-                start(workingTime);
-            } catch ( Exception e) {
-                e.printStackTrace();
-            }
-        });
         receivers = receivers.stream().distinct().collect(Collectors.toList());
 
 
@@ -76,13 +74,21 @@ public class TokenRing {
         long startTime = System.nanoTime();
         long finishTime = startTime + TimeUnit.SECONDS.toNanos(workingTime);
         Batch firstBatch = new Batch(numberOfStart, 0, "data", "" + (nodeCount - 1), startTime, finishTime);
+        Thread mainExecutor = new Thread(() -> {
+            try {
+//                start(workingTime);
+                firstReceiver.sendToNext(firstBatch);
+            } catch ( Exception e) {
+                e.printStackTrace();
+            }
+        });
         for (int i = 1; i < batchCount; i++) {
             startTime = System.nanoTime();
             finishTime = startTime + TimeUnit.SECONDS.toNanos(workingTime);
             firstReceiver.addToBuffer(new Batch(numberOfStart, i, "data", "" + (nodeCount - 1), startTime, finishTime));
         }
         mainExecutor.start();
-        firstReceiver.sendToNext(firstBatch);
+        start(workingTime);
         mainExecutor.join();
     }
 }
