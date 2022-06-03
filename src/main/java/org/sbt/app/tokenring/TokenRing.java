@@ -40,9 +40,9 @@ public class TokenRing {
     }
 
     private BatchReceiver getReceiver(int batchCount, long workingTime) {
-//        return new NonBlockingArrayReceiver(batchCount);
+        return new NonBlockingArrayReceiver(batchCount);
 //        return new BlockingQueueReceiver();
-        return new ExchangerReceiver(workingTime);
+//        return new ExchangerReceiver(workingTime);
     }
 
     private void start(long workingTime) {

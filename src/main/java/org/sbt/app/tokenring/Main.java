@@ -9,8 +9,8 @@ import java.util.concurrent.TimeoutException;
 
 public class Main {
     public final static int NODE_COUNT = 4;
-    public final static int BATCH_COUNT = 1;
-    public final static int WORKING_TIME_IN_SEC = 1;
+    public final static int BATCH_COUNT = 16;
+    public final static int WORKING_TIME_IN_SEC = 2;
 
     private final static Logger LOGGER = Logger.getLogger(Main.class);
 
@@ -25,7 +25,7 @@ public class Main {
         long s = System.currentTimeMillis();
         System.out.println(0);
         //real starts
-        for (int i = 1; i <= 3; i++) {
+        for (int i = 1; i <= 5; i++) {
             tokenRing = new TokenRing(NODE_COUNT, BATCH_COUNT, WORKING_TIME_IN_SEC);
             tokenRing.sendData(i);
             System.out.println(i);

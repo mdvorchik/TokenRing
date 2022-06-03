@@ -2,6 +2,9 @@ import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import pylab
+import scipy.stats as stats
+import seaborn as sns
 import plotly.graph_objects as go
 
 matplotlib.rcParams["axes.formatter.limits"] = (-10, 10)
@@ -10,61 +13,58 @@ df = pd.read_csv('log.out', sep=',')
 
 data = df.to_numpy()
 
-last_batch_id = max(data[:, 1])
-nodes_count = data[0, 0] + 1
-number_of_starts = len(data[:, 1]) // (last_batch_id + 1)
+last_batch_id = max(data[:, 2])
+nodes_count = max(data[:, 1]) + 1
+number_of_starts = 5
+working_time = 2
 
-start_to_batch_time = np.full((number_of_starts, 2), 0)
-start_to_node_time = np.full((number_of_starts, 2), 0)
-
-for i in range(number_of_starts):
-    start_to_batch_time[i, 0] = i + 1
-    start_to_batch_time[i, 1] = np.mean(data[(number_of_starts * i):(number_of_starts * (i + 1)), 2])
+number_of_delivered_msg = np.zeros(number_of_starts)
+latency_by_start = np.zeros(number_of_starts)
 
 for i in range(number_of_starts):
-    start_to_node_time[i, 0] = i + 1
-    start_to_node_time[i, 1] = data[number_of_starts * (i + 1) - 1, 3]
+    indexes_to_keep = np.where(data[:, 0] == i + 1)
+    latency_of_start = data[:, 3][indexes_to_keep]
+    latency_by_start[i] = np.mean(latency_of_start)
+    for j in range(len(data[:, 0])):
+        if data[j, 0] == i + 1 and data[j, 1] == nodes_count - 1:
+            number_of_delivered_msg[i] = number_of_delivered_msg[i] + 1
 
-start_indexes = np.arange(len(data))
+number_of_delivered_msg = number_of_delivered_msg // working_time
 
-for i in range(number_of_starts):
-    for j in range(last_batch_id + 1):
-        start_indexes[(i * number_of_starts) + j] = i + 1
+for el in number_of_delivered_msg:
+    print(el)
 
-# Make data.
-Y = start_indexes
-X = data[:, 1]
-Z = data[:, 2]
+throughput = np.mean(number_of_delivered_msg)
+latency = np.mean(latency_by_start)
 
-verts = []
-temp_verts = []
-for i in range(len(X)):
-    temp_verts.append(Z[i])
-    if X[i] == last_batch_id:
-        verts.append(temp_verts)
-        temp_verts = []
+print("Throughput: ", round(throughput))
+print("Latency: ", round(latency))
+print("Median latency: ", round(np.quantile(data[:, 3], 0.5)))
 
-fig = go.Figure(data=[go.Surface(x=X[:last_batch_id + 1], z=verts)])
-fig.update_layout(scene=dict(
-    xaxis_title="Номер пакета",
-    yaxis_title="Номер запуска",
-    zaxis_title="Время достижения пакета финала (нс)"))
-fig.show()
+fig = plt.figure()
+ax = fig.add_subplot(111)
+res = stats.probplot(data[:, 3], dist="norm", plot=ax)
+ax.set_title("Распределение latency для всех запусков")
+plt.show()
 
 fig, ax = plt.subplots()
 plt.figure(figsize=(10, 6))
-plt.scatter(start_to_node_time[:, 0], start_to_node_time[:, 1], cmap=plt.cm.rainbow)
-ax.plot(start_to_node_time[:, 0], start_to_node_time[:, 1])
+plt.scatter(range(number_of_starts), number_of_delivered_msg, cmap=plt.cm.rainbow)
+ax.plot(range(number_of_starts), number_of_delivered_msg)
 ax.grid()
 ax.set_xlabel('Номер запуска')
-ax.set_ylabel('Время работы (нс)')
+ax.set_ylabel('Throughput (нс)')
+ax.set_title("Throughput для всех запусков")
 plt.title('Start to work node time')
-plt.savefig('work.png')
 plt.show()
 
-mean_node_work = np.mean(start_to_node_time[:, 1])
-ns_to_node = mean_node_work // (last_batch_id + 1)
-
-latency = np.mean(start_to_batch_time[:, 1]) // nodes_count
-print("Throughput: ", ns_to_node)
-print("Latency: ", latency)
+fig, ax = plt.subplots()
+plt.figure(figsize=(10, 6))
+plt.scatter(range(number_of_starts), latency_by_start, cmap=plt.cm.rainbow)
+ax.plot(range(number_of_starts), latency_by_start)
+ax.grid()
+ax.set_xlabel('Номер запуска')
+ax.set_ylabel('Latency (нс)')
+ax.set_title("Latency для всех запусков")
+plt.title('Start to work node time')
+plt.show()
